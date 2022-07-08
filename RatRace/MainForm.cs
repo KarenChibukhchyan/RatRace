@@ -8,26 +8,30 @@ namespace RatRace
     public partial class MainForm : Form
     {
         int initialX = 23;
-        int step = 5;
-        bool finished;
+        int step = 20;
+        bool _finished;
+        readonly object _lock = new object();
 
         public MainForm()
         {
             InitializeComponent();
         }
 
-        private void Run(Button button, object lockObject)
+        private void Run(object objButton)
         {
-            int sleepInterval = new Random().Next(100, 500);
-            while (!finished)
+            var button = (Button) objButton;
+            int sleepInterval = new Random().Next(10, 1000);
+            while (!_finished)
             {
                 Thread.Sleep(sleepInterval);
-                button.Location = new Point(button.Location.X + step, button.Location.Y);
-                if (button.Location.X >= finishLabel.Location.X)
+                lock (_lock)
                 {
-                    lock (lockObject)
+                    button.Location = new Point(button.Location.X + step, button.Location.Y);
+                    if (button.Location.X + button.Size.Width >= finishLabel.Location.X)
                     {
-                        finished = true;
+                        {
+                            _finished = true;
+                        }
                     }
                 }
             }
@@ -37,8 +41,10 @@ namespace RatRace
 
         private void startBtn_Click(object sender, EventArgs e)
         {
-            Thread t = new Thread(new ThreadStart(Run));
-
+            _finished = false;
+            new Thread(new ParameterizedThreadStart(Run)).Start(nikolikBtn);
+            new Thread(new ParameterizedThreadStart(Run)).Start(serjikBtn);
+            new Thread(new ParameterizedThreadStart(Run)).Start(robikBtn);
         }
     }
 }
